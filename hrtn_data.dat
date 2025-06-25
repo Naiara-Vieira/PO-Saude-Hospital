@@ -1,0 +1,818 @@
+#############################################################################
+# Projeto Planejamento Estrategico Hospital (Risoleta Neves)
+# Trabalho final da disciplina Pesquisa Operacional para Saúde 2025/1
+# Versao 1: 30/04/2025
+# Versão 2: 05/06/2025 por Naiara Helena Vieira
+# Naiara Helena Vieira, aluna de doutorado PPGEP
+# Autor (professor orientador): João Flávio de Freitas Almeida <joao.flavio@dep.ufmg.br>
+# LEPOINT: Laboratório de Estudos em Planejamento de Operações Integradas
+# Departamento de Engenharia de Produção
+# Universidade Federal de Minas Gerais - Escola de Engenharia
+############################################################################# 
+
+data;
+
+# Set of resource types: 
+set SL	:=	R1	R2	R3	;																																																					
+set EQ	:=	R4  R5	R6	R7	R8	R9	R10	R11	;
+set LT	:=	R12 R13	R14	R15	R16	R17	R18	R19	R20	R21	R22	R23	;
+set PF	:=	R24	R25	R26	R27	R28	R29	R30	R31	R32	R33	R34	R35	R36	;
+set MD	:=	R37	R38	R39	R40	R41	R42	R43	R44	R45	R46	R47	R48	R49	R50	R51	R52	R53	R54	R55	R56	R57	R58	R59	R60	R61	R62	R63	R64	R65	R66	R67 ;
+
+# Types of Patients SUS (Manchester Protocol) 
+# Fonte: SILVA, Alessandra Dias Costa e et al. 
+# Caracterizacao dos atendimentos de um pronto-socorro publico segundo o Sistema de Triagem de Manchester. 
+# REME: Revista Mineira de Enfermagem, Belo Horizonte, v. 23, e-1178, 2019. 
+# Disponivel em: https://doi.org/10.5935/1415-2762.20190026 . Acesso em: 25 maio 2025.
+param: P: MANCH:=
+1   0.006     #  Vermelho: Emergente
+2   0.154     #  Laranja: Muito Urgente
+3   0.456     #  Amarelo: Urgente
+4   0.334     #  Verde: Pouco Urgente
+5   0.05     #  Azul: Não Urgente
+;
+
+# Investment Resource for the next year - description
+param: K: RESE	:=
+1	 'Obras e Equip Adm'	#	Capital c/ obras e equip. Administrativos
+2	 'Supriment. Medicos'	#	Investimentos em Suprimentos médicos e EPI
+3	 'Equipamentos Med'	#	Investimentos em Equipamentos médicos
+4	 'Reserva de Conting.'	#	Reserva de contingenciamento
+5	 'Reajuste Salarial'	#	Aumento de salario
+;
+
+# Investment Resource for the next year - percentual
+param: RPA	:=
+1	 0.20		#	Capital w/ works and equip. administrative
+2	 0.20		#	Investments in Medical Supplies and PPE
+3	 0.30		#	Investments in Medical Equipment
+4	 0.20		#	Contingency reserve
+5	 0.10   #	Salary increase
+;
+
+# Resources, fixed cost per mouth, quantity, description
+param: 
+R: 	FC	R_Qty	R_Description:=
+R1	7813	20	'Sala Urgencia e Emergencia'
+R2	4688	10	'Sala Ambulatorial'
+R3	6250	51	 'Sala Hospitalar'
+R4	781	1	'Equipamentos de Audiologia'
+R5	15625	16	'Equipamentos de Diagnostico por Imagem'
+R6	3646	2	'Equipamentos de Infraestrutura'
+R7	1563	6	'Equipamentos de Odontologia'
+R8	4688	786	'Equipamentos para Manutencao da Vida'
+R9	2344	14	'Equipamentos por Metodos Graficos'
+R10	2344	23	'Equipamentos por Metodos opticos'
+R11	1823	7	'Outros Equipamentos'
+R12	1823	100	 'Leitos de Cirurgia Geral'
+R13	1927	4	 'Leitos Cirurgico de Ginecologia'
+R14	2240	22	 'Leitos Cirurgico de Ortopediatraumatologia'
+R15	1302	208	 'Leitos de Clinica Geral'
+R16	2604	4	 'Leitos Clinicos de Neonatologia'
+R17	2500	25	 'Leitos de Obstetria Cirurgica'
+R18	1927	4	 'Leitos de Obstetria Clinica'
+R19	2240	8	 'Leitos de Pediatria Cirurgica'
+R20	4167	4	'Leitos de UCI (Cuidados Intermediarios) Neonatal Canguru'
+R21	5469	6	'Leitos de UCI (Cuidados Intermediarios) Neonatal Convencional'
+R22	5208	35	'Leitos de UTI Adulto (Tipo II)'
+R23	6250	10	'Leitos de UTI Neonatal (Tipo II)'
+R24	3128.04	17	'Assistente Social'
+R25	1578.83	134	 'Auxiliar Outros - Admistrativo, Almoxarife, Farmacia'
+R26	3781.43	1	 'Dentista'
+R27	3400.03	262	'Enfermeiro'
+R28	4724.5	23	'Farmaceutico'
+R29	3128.04	74	 'Fisioterapeuta'
+R30	3754.03	25	'Fonoaudiologo'
+R31	4247.95	14	'Nutricionista'
+R32	3128.04	10	 'Psicologo'
+R33	3325	686	'Tecnico de Enfermagem'
+R34	2256.92	122	'Tecnico Outros'
+R35	2256.92	6	'Tecnico Superior'
+R36	3128.04	16	'Terapeuta Ocupacional'
+R37	4889.13	60	'Medico Anestesiologista'
+R38	4889.13	6	'Medico Cardiologista'
+R39	4889.13	8	 'Medico Cirurgiao Cardiovascular'
+R40	4889.13	35	'Medico Cirurgiao Geral'
+R41	4889.13	15	'Medico Cirurgiao Plastico'
+R42	4889.13	1	'Medico Cirurgiao Toracico'
+R43	11298.22	155	'Medico Clinico'
+R44	4889.13	7	'Medico do Trabalho'
+R45	4889.13	11	'Medico em Cirurgia Vascular'
+R46	4889.13	5	'Medico em Endoscopia'
+R47	11298.22	43	'Medico em Medicina Intensiva'
+R48	4889.13	1	 'Medico em Medicina Preventiva e Social'
+R49	4889.13	17	'Medico em Radiologia e Diagnostico por Imagem'
+R50	4889.13	1	'Medico Endocrinologista e Metabologista'
+R51	4889.13	38	'Medico Ginecologista e Obstetra'
+R52	4889.13	1	'Medico Hematologista'
+R53	4889.13	1	'Medico Infectologista'
+R54	9778.31	6	'Medico Nefrologista'
+R55	4889.13	15	'Medico Neurocirurgiao'
+R56	4889.13	22	'Medico Neurologista'
+R57	4889.13	2	'Medico Nutrologista'
+R58	4889.13	2	'Medico Oftalmologista'
+R59	4889.13	82	'Medico Ortopedista e Traumatologista'
+R60	4889.13	3	 'Medico Patologista'
+R61	4889.13	1	 'Medico Patologista e Clinico Medicina Laboratorial'
+R62	4889.13	44	 'Medico Pediatra'
+R63	4889.13	1	'Medico Pneumologista'
+R64	4889.13	1	'Medico Psiquiatra'
+R65	4889.13	9	'Medico Radiologista Intervencionista'
+R66	4889.13	2	'Medico Radioterapeuta'
+R67	4106.09	382	'Medico Residente'
+;
+
+# Set of service types
+param:
+S:	VC	Beta	DMAXKM	DMAXMIN	NEED	OFFER	S_min	S_description:=
+S1	0.2	0.460517018598809	10	20	2000	0.3	46	'AMB_02_G02-01: Coleta de material'
+S2	0.25	0.575646273248511	8	16	2000	0.3	100516	'AMB_02_G02-02: Diagnostico em laboratorio clinico'
+S3	0.3	0.307011345732539	15	30	100	0.04	196	'AMB_02_G02-03: Diagnostico por anatomia patologica e citopatologia'
+S4	0.275	0.307011345732539	15	30	500	0.24	59781	'AMB_02_G02-04: Diagnostico por radiologia'
+S5	0.1625	0.307011345732539	15	30	150	0.12	2116	'AMB_02_G02-05: Diagnostico por ultrasonografia'
+S6	0.2	0.15350567286627	30	60	30	0.03	69	'AMB_02_G02-09: Diagnostico por endoscopia'
+S7	0.3	0.460517018598809	10	20	50	0.048	9841	'AMB_02_G02-11: Metodos diagnosticos em especialidades'
+S8	0.25	0.15350567286627	30	60	10	0.008	153	'AMB_02_G02-12: Diagnostico e procedimentos especiais em hemoterapia'
+S9	0.25	0.921034037197618	5	10	500	0.16	255	 'AMB_02_G02-14: Diagnostico por teste rapido'
+S10	0.2	0.575646273248511	8	16	2500	0.36	209455	'AMB_02_G03-01: Consultas / Atendimentos / Acompanhamentos'
+S11	0.2	0.460517018598809	10	20	100	0.04	935	'AMB_02_G03-02: Fisioterapia'
+S12	0.25	0.460517018598809	10	20	200	0.08	3089	'AMB_02_G03-03: Tratamento clinico (outras especialidades)'
+S13	0.25	0.15350567286627	30	60	10	0.002	43	'AMB_02_G03-06: Hemoterapia'
+S14	0.3	0.230258509299405	20	40	50	0.02	1	'AMB_02_G03-09: Terapias especializadas'
+S15	0.2	0.15350567286627	30	60	50	0.02	7680	'AMB_02_G04-01: Pequenas cirurgias e cirurgias de pele  tecido subcutaneo e mucosa'
+S16	0.35	0.15350567286627	30	60	20	0.008	53	'AMB_02_G04-04: Cirurgia das vias aereas superiores  face  cabeca e pescoco'
+S17	0.3	0.15350567286627	30	60	10	0.004	1	'AMB_02_G04-06: Cirurgia do aparelho circulatorio'
+S18	0.25	0.15350567286627	30	60	15	0.008	5	'AMB_02_G04-07: Cirurgia do aparelho digestivo  orgaos anexos e parede abdominal'
+S19	0.3	0.15350567286627	30	60	20	0.012	783	'AMB_02_G04-08: Cirurgia do sistema osteomuscular'
+S20	0.3	0.15350567286627	30	60	10	0.006	9	'AMB_02_G04-09: Cirurgia do aparelho geniturinario'
+S21	0.3	0.15350567286627	30	60	5	0.002	3	'AMB_02_G04-12: Cirurgia toracica'
+S22	0.3	0.15350567286627	30	60	10	0.004	1533	'AMB_02_G04-15: Outras cirurgias'
+S23	0.25	0.15350567286627	30	60	100	0.02	83	'AMB_02_G04-17: Anesteseologia'
+S24	0.3	0.15350567286627	30	60	80	0.02	9259	'AMB_03_G02-06: Diagnostico por tomografia'
+S25	0.25	0.15350567286627	30	60	30	0.008	271	'AMB_03_G02-07: Diagnostico por ressonancia magnetica'
+S26	0.2	0.0921034037197618	50	100	10	0.003	3	'AMB_03_G03-06: Hemoterapia'
+S27	0.3	0.460517018598809	10	20	1000	0.12	21	'HOSP_02_G02-01: Coleta de material'
+S28	0.25	0.15350567286627	30	60	30	0.02	100	'HOSP_02_G02-09: Diagnostico por endoscopia'
+S29	0.2	0.307011345732539	15	30	1500	0.15	1039	'HOSP_02_G03-01: Consultas / Atendimentos / Acompanhamentos'
+S30	0.3	0.307011345732539	15	30	200	0.035	10738	'HOSP_02_G03-03: Tratamento clinico (outras especialidades)'
+S31	0.3625	0.15350567286627	30	60	10	0.001	413	'HOSP_02_G03-04: Tratamento em oncologia'
+S32	0.25	0.15350567286627	30	60	10	0.0015	599	'HOSP_02_G03-05: Tratamento em nefrologia'
+S33	0.3	0.15350567286627	30	60	15	0.01	1705	'HOSP_02_G03-08: Tratamento em lesoes  envenenamento e outros (causa externa)'
+S34	0.1625	0.15350567286627	30	60	25	0.015	1921	'HOSP_02_G03-10: Parto e nascimento'
+S35	0.2	0.15350567286627	30	60	50	0.01	122	'HOSP_02_G04-01: Pequenas cirurgias e cirurgias de pele  tecido subcutaneo e mucosa'
+S36	0.2	0.15350567286627	30	60	10	0.003	172	'HOSP_02_G04-03: Cirurgia do sistema nervoso central e periferico'
+S37	0.175	0.15350567286627	30	60	20	0.007	83	'HOSP_02_G04-04: Cirurgia das vias aereas superiores  face  cabeca e pescoco'
+S38	0.3	0.15350567286627	30	60	10	0.003	83	 'HOSP_02_G04-06: Cirurgia do aparelho circulatorio'
+S39	0.25	0.15350567286627	30	60	15	0.007	746	 'HOSP_02_G04-07: Cirurgia do aparelho digestivo  orgaos anexos e parede abdominal'
+S40	0.25	0.15350567286627	30	60	20	0.009	1652	'HOSP_02_G04-08: Cirurgia do sistema osteomuscular'
+S41	0.2	0.15350567286627	30	60	10	0.004	299	'HOSP_02_G04-09: Cirurgia do aparelho geniturinario'
+S42	0.25	0.15350567286627	30	60	5	0.002	8	'HOSP_02_G04-10: Cirurgia de mama'
+S43	0.3625	0.15350567286627	30	60	25	0.004	777	'HOSP_02_G04-11: Cirurgia obstetrica'
+S44	0.35	0.15350567286627	30	60	5	0.002	127	'HOSP_02_G04-12: Cirurgia toracica'
+S45	0.25	0.15350567286627	30	60	5	0.003	36	'HOSP_02_G04-13: Cirurgia reparadora'
+S46	0.3	0.15350567286627	30	60	10	0.004	1721	 'HOSP_02_G04-15: Outras cirurgias'
+S47	0.25	0.460517018598809	10	20	500	0.002	1	'HOSP_03_G02-01: Coleta de material'
+S48	0.3	0.15350567286627	30	60	30	0.008	24	'HOSP_03_G02-09: Diagnostico por endoscopia'
+S49	0.2	0.307011345732539	15	30	200	0.02	182	'HOSP_03_G03-03: Tratamento clinico (outras especialidades)'
+S50	0.25	0.15350567286627	30	60	20	0.001	2	'HOSP_03_G04-04: Cirurgia das vias aereas superiores   face  cabeca e pescoco'
+S51	0.3625	0.15350567286627	30	60	10	0.0004	129	 'HOSP_03_G04-06: Cirurgia do aparelho circulatorio | FAEC + 1'
+S52	0.35	0.15350567286627	30	60	15	0.001	80	 'HOSP_03_G04-07: Cirurgia do aparelho digestivo  orgaos anexos e parede abdominal | FAEC + 80'
+S53	0.35	0.15350567286627	30	60	20	0.002	159	'HOSP_03_G04-08: Cirurgia do sistema osteomuscular'
+S54	0.25	0.15350567286627	30	60	5	0.001	11	'HOSP_03_G04-12: Cirurgia toracica'
+S55	0.25	0.15350567286627	30	60	10	0.001	90	 'HOSP_03_G04-15: Outras cirurgias | FAEC + 5'
+S56	0.2	0.921034037197618	5	10	2	0.0004	27	 'HOSP_03_G05-03: Acoes relacionadas a doacao de orgaos e tecidos para transplante | FAEC + 27'
+;								
+
+# Recursos necessarios para cada tipo de servico
+set RS[S1]:= 	R2	R67	R33	R28															; # 	'AMB_02_G02-01: Coleta de material'
+set RS[S2]:= 	R2	R9	R11	R33	R43	R67													; # 	'AMB_02_G02-02: Diagnostico em laboratorio clinico'
+set RS[S3]:= 	R3	R9	R33	R60	R61	R67													; # 	'AMB_02_G02-03: Diagnostico por anatomia patologica e citopatologia'
+set RS[S4]:= 	R3	R5	R33	R65	R66	R49	R67												; # 	'AMB_02_G02-04: Diagnostico por radiologia'
+set RS[S5]:= 	R3	R5	R33	R49	R67														; # 	'AMB_02_G02-05: Diagnostico por ultrasonografia'
+set RS[S6]:= 	R3	R5	R10	R33	R46	R67													; # 	'AMB_02_G02-09: Diagnostico por endoscopia'
+set RS[S7]:= 	R3	R4	R9	R10	R33	R43	R67												; # 	'AMB_02_G02-11: Metodos diagnosticos em especialidades'
+set RS[S8]:= 	R3	R33	R52	R67															; # 	'AMB_02_G02-12: Diagnostico e procedimentos especiais em hemoterapia'
+set RS[S9]:= 	R2	R11	R33	R67															; # 	AMB_02_G02-14: Diagnostico por teste rapido'
+set RS[S10]:= 	R2	R24	R27	R33	R36	R38	R47	R51	R59	R62	R67	R44	R15						; # 	'AMB_02_G03-01: Consultas / Atendimentos / Acompanhamentos'
+set RS[S11]:= 	R3	R29	R33																; # 	'AMB_02_G03-02: Fisioterapia'
+set RS[S12]:= 	R3	R27	R30	R31	R32	R29	R33	R45	R47	R54	R55	R56	R67						; # 	'AMB_02_G03-03: Tratamento clinico (outras especialidades)'
+set RS[S13]:= 	R3	R27	R28	R33	R52	R67													; # 	'AMB_02_G03-06: Hemoterapia'
+set RS[S14]:= 	R3	R29	R33	R36	R67														; # 	'AMB_02_G03-09: Terapias especializadas'
+set RS[S15]:= 	R3	R8	R33	R37	R67	R15													; # 	'AMB_02_G04-01: Pequenas cirurgias e cirurgias de pele  tecido subcutaneo e mucosa'
+set RS[S16]:= 	R3	R7	R8	R12	R15	R26	R27	R33	R37	R39	R40	R55	R67						; # 	'AMB_02_G04-04: Cirurgia das vias aereas superiores  face  cabeca e pescoco'
+set RS[S17]:= 	R3	R6	R8	R12	R15	R27	R33	R37	R38	R39	R40	R67							; # 	'AMB_02_G04-06: Cirurgia do aparelho circulatorio'
+set RS[S18]:= 	R3	R8	R12	R15	R27	R33	R37	R40	R67										; # 	'AMB_02_G04-07: Cirurgia do aparelho digestivo  orgaos anexos e parede abdominal'
+set RS[S19]:= 	R3	R8	R12	R15	R27	R33	R37	R40	R67										; # 	'AMB_02_G04-08: Cirurgia do sistema osteomuscular'
+set RS[S20]:= 	R3	R8	R13	R15	R27	R33	R37	R40	R51	R67									; # 	'AMB_02_G04-09: Cirurgia do aparelho geniturinario'
+set RS[S21]:= 	R3	R8	R12	R15	R27	R33	R37	R38	R39	R40	R42	R59	R67						; # 	'AMB_02_G04-12: Cirurgia toracica'
+set RS[S22]:= 	R3	R8	R12	R15	R27	R33	R34	R35	R37	R39	R40	R41	R43	R67					; # 	'AMB_02_G04-15: Outras cirurgias'
+set RS[S23]:= 	R3	R33	R37	R67															; # 	'AMB_02_G04-17: Anesteseologia'
+set RS[S24]:= 	R2	R5	R9	R33	R67	R49													; # 	'AMB_03_G02-06: Diagnostico por tomografia'
+set RS[S25]:= 	R2	R5	R10	R33	R67	R49													; # 	'AMB_03_G02-07: Diagnostico por ressonancia magnetica'
+set RS[S26]:= 	R2	R28	R27	R33	R52	R67													; # 	'AMB_03_G03-06: Hemoterapia'
+set RS[S27]:= 	R3	R67	R33	R28															; # 	'HOSP_02_G02-01: Coleta de material'
+set RS[S28]:= 	R3	R33	R46	R67															; # 	'HOSP_02_G02-09: Diagnostico por endoscopia'
+set RS[S29]:= 	R3	R24	R27	R33	R36	R38	R47	R51	R59	R62	R67	R44	R48	R64					; # 	'HOSP_02_G03-01: Consultas / Atendimentos / Acompanhamentos'
+set RS[S30]:= 	R3	R30	R31	R32	R29	R33	R62	R56	R47	R67									; # 	'HOSP_02_G03-03: Tratamento clinico (outras especialidades)'
+set RS[S31]:= 	R3	R33	R67	R43															; # 	'HOSP_02_G03-04: Tratamento em oncologia'
+set RS[S32]:= 	R3	R27	R33	R54	R67														; # 	'HOSP_02_G03-05: Tratamento em nefrologia'
+set RS[S33]:= 	R1	R8	R27	R33	R43	R40	R3	R67											; # 	'HOSP_02_G03-08: Tratamento em lesoes  envenenamento e outros (causa externa)'
+set RS[S34]:= 	R3	R8	R17	R20	R21	R15	R16	R22	R23	R27	R33	R37	R51	R67					; # 	'HOSP_02_G03-10: Parto e nascimento'
+set RS[S35]:= 	R3	R8	R12	R15	R27	R33	R37	R40	R67										; # 	'HOSP_02_G04-01: Pequenas cirurgias e cirurgias de pele  tecido subcutaneo e mucosa'
+set RS[S36]:= 	R3	R1	R8	R12	R15	R22	R27	R33	R37	R39	R40	R67							; # 	'HOSP_02_G04-03: Cirurgia do sistema nervoso central e periferico'
+set RS[S37]:= 	R3	R1	R8	R12	R15	R22	R14	R26	R27	R33	R37	R40	R67						; # 	'HOSP_02_G04-04: Cirurgia das vias aereas superiores  face  cabeca e pescoco'
+set RS[S38]:= 	R3	R1	R8	R12	R15	R27	R33	R37	R38	R39	R40	R67							; # 	HOSP_02_G04-06: Cirurgia do aparelho circulatorio'
+set RS[S39]:= 	R3	R1	R8	R12	R15	R27	R33	R37	R40	R67									; # 	HOSP_02_G04-07: Cirurgia do aparelho digestivo  orgaos anexos e parede abdominal'
+set RS[S40]:= 	R3	R1	R8	R14	R27	R33	R37	R40	R67										; # 	'HOSP_02_G04-08: Cirurgia do sistema osteomuscular'
+set RS[S41]:= 	R3	R8	R13	R15	R27	R33	R37	R40	R51	R67									; # 	'HOSP_02_G04-09: Cirurgia do aparelho geniturinario'
+set RS[S42]:= 	R3	R8	R12	R15	R27	R33	R37	R40	R41	R67									; # 	'HOSP_02_G04-10: Cirurgia de mama'
+set RS[S43]:= 	R3	R1	R8	R17	R18	R27	R33	R37	R51	R67									; # 	'HOSP_02_G04-11: Cirurgia obstetrica'
+set RS[S44]:= 	R3	R1	R8	R14	R15	R27	R33	R37	R38	R39	R40	R42	R59	R67					; # 	'HOSP_02_G04-12: Cirurgia toracica'
+set RS[S45]:= 	R3	R7	R8	R14	R15	R27	R33	R37	R40	R41	R67								; # 	'HOSP_02_G04-13: Cirurgia reparadora'
+set RS[S46]:= 	R3	R7	R8	R12	R15	R27	R33	R34	R35	R37	R39	R40	R41	R43	R67				; # 	HOSP_02_G04-15: Outras cirurgias'
+set RS[S47]:= 	R3	R33	R28	R67															; # 	'HOSP_03_G02-01: Coleta de material'
+set RS[S48]:= 	R3	R5	R10	R33	R46	R67													; # 	'HOSP_03_G02-09: Diagnostico por endoscopia'
+set RS[S49]:= 	R3	R28	R29	R30	R31	R32	R33	R34	R35	R67	R47	R63	R62	R58	R57	R56	R53	R50	; # 	'HOSP_03_G03-03: Tratamento clinico (outras especialidades)'
+set RS[S50]:= 	R3	R1	R7	R8	R27	R33	R37	R39	R40	R67									; # 	'HOSP_03_G04-04: Cirurgia das vias aereas superiores   face  cabeca e pescoco'
+set RS[S51]:= 	R3	R1	R8	R12	R15	R22	R14	R27	R33	R37	R38	R39	R40	R45	R67				; # 	HOSP_03_G04-06: Cirurgia do aparelho circulatorio | FAEC + 1'
+set RS[S52]:= 	R3	R1	R8	R12	R15	R22	R27	R33	R37	R39	R40	R67							; # 	HOSP_03_G04-07: Cirurgia do aparelho digestivo  orgaos anexos e parede abdominal | FAEC + 80'
+set RS[S53]:= 	R3	R1	R8	R14	R15	R27	R33	R37	R40	R55	R45	R67							; # 	'HOSP_03_G04-08: Cirurgia do sistema osteomuscular'
+set RS[S54]:= 	R3	R1	R8	R14	R15	R22	R27	R33	R37	R38	R39	R40	R42	R59	R67				; # 	'HOSP_03_G04-12: Cirurgia toracica'
+set RS[S55]:= 	R3	R1	R8	R19	R27	R33	R34	R35	R37	R38	R39	R40	R41	R67	R59				; # 	HOSP_03_G04-15: Outras cirurgias | FAEC + 5'
+set RS[S56]:= 	R3	R25	R33	R34	R35	R36	R67												; # 	HOSP_03_G05-03: Ações relacionadas a doação de órgãos e tecidos para transplante | FAEC + 27'
+
+
+# Types of Patients (Public SUS) 
+param PRICE:=	
+S1	52.8
+S2	15.15
+S3	42.8
+S4	18.13
+S5	32.53
+S6	80.61
+S7	11.99
+S8	25.65
+S9	1
+S10	19.59
+S11	4.79
+S12	14.32
+S13	8.09
+S14	37.94
+S15	10.07
+S16	61.99
+S17	3.38
+S18	3.04
+S19	4.83
+S20	14.04
+S21	4.36
+S22	9.95
+S23	18.71
+S24	222.67
+S25	274.92
+S26	105.01
+S27	41.76
+S28	61.31
+S29	3.86
+S30	181.89
+S31	95.87
+S32	160.81
+S33	153.13
+S34	303.2
+S35	156.74
+S36	568.17
+S37	267.17
+S38	442.95
+S39	545.92
+S40	361.91
+S41	303.85
+S42	283.32
+S43	224.05
+S44	533.8
+S45	218.38
+S46	226.28
+S47	442.6
+S48	243.4
+S49	349.68
+S50	643.3
+S51	4443.31
+S52	1236.25
+S53	1355.73
+S54	671.7
+S55	0
+S56	920.41
+;
+
+param TUR :=
+[S1,R2]	0.279452055	#	'AMB_02_G02-01: Coleta de material'
+[S1,R67]	0.55890411	#	
+[S1,R33]	0.51	#	
+[S1,R28]	1.02	#	
+[S2,R2]	0.279452055	#	'AMB_02_G02-02: Diagnostico em laboratorio clinico'
+[S2,R9]	0.256120527	#	
+[S2,R11]	2.04	#	
+[S2,R33]	0.51	#	
+[S2,R43]	0.55890411	#	
+[S2,R67]	0.55890411	#	
+[S3,R3]	3.269230769	#	'AMB_02_G02-03: Diagnostico por anatomia patologica e citopatologia'
+[S3,R9]	0.256120527	#	
+[S3,R33]	0.51	#	
+[S3,R60]	0.55890411	#	
+[S3,R61]	0.55890411	#	
+[S3,R67]	0.55890411	#	
+[S4,R3]	3.269230769	#	'AMB_02_G02-04: Diagnostico por radiologia'
+[S4,R5]	0.256120527	#	
+[S4,R33]	0.51	#	
+[S4,R65]	0.55890411	#	
+[S4,R66]	0.55890411	#	
+[S4,R49]	0.55890411	#	
+[S4,R67]	0.55890411	#	
+[S5,R3]	3.269230769	#	'AMB_02_G02-05: Diagnostico por ultrasonografia'
+[S5,R5]	0.256120527	#	
+[S5,R33]	0.51	#	
+[S5,R49]	0.55890411	#	
+[S5,R67]	0.55890411	#	
+[S6,R3]	3.269230769	#	'AMB_02_G02-09: Diagnostico por endoscopia'
+[S6,R5]	0.256120527	#	
+[S6,R10]	0.408	#	
+[S6,R33]	0.51	#	
+[S6,R46]	0.55890411	#	
+[S6,R67]	0.55890411	#	
+[S7,R3]	3.269230769	#	'AMB_02_G02-11: Metodos diagnosticos em especialidades'
+[S7,R4]	5.1	#	
+[S7,R9]	0.256120527	#	
+[S7,R10]	0.408	#	
+[S7,R33]	0.51	#	
+[S7,R43]	0.55890411	#	
+[S7,R67]	0.55890411	#	
+[S8,R3]	3.269230769	#	'AMB_02_G02-12: Diagnostico e procedimentos especiais em hemoterapia'
+[S8,R33]	0.51	#	
+[S8,R52]	0.55890411	#	
+[S8,R67]	0.55890411	#	
+[S9,R2]	0.279452055	#	AMB_02_G02-14: Diagnostico por teste rapido'
+[S9,R11]	2.04	#	
+[S9,R33]	0.51	#	
+[S9,R67]	0.55890411	#	
+[S10,R2]	0.279452055	#	'AMB_02_G03-01: Consultas / Atendimentos / Acompanhamentos'
+[S10,R15]	1.863013699	#	
+[S10,R24]	2.04	#	
+[S10,R27]	0.68	#	
+[S10,R33]	0.51	#	
+[S10,R36]	2.04	#	
+[S10,R38]	0.55890411	#	
+[S10,R47]	0.55890411	#	
+[S10,R51]	0.55890411	#	
+[S10,R59]	0.55890411	#	
+[S10,R62]	0.55890411	#	
+[S10,R67]	0.55890411	#	
+[S10,R44]	0.55890411	#	'AMB_02_G03-02: Fisioterapia'
+[S11,R3]	3.269230769	#	
+[S11,R29]	1.02	#	
+[S11,R33]	0.51	#	'AMB_02_G03-03: Tratamento clinico (outras especialidades)'
+[S12,R3]	3.269230769	#	
+[S12,R27]	0.68	#	
+[S12,R30]	2.04	#	
+[S12,R31]	2.04	#	
+[S12,R32]	2.04	#	
+[S12,R29]	1.02	#	
+[S12,R33]	0.51	#	
+[S12,R45]	0.55890411	#	
+[S12,R47]	0.55890411	#	
+[S12,R54]	0.55890411	#	
+[S12,R55]	0.55890411	#	
+[S12,R56]	0.55890411	#	
+[S12,R67]	0.55890411	#	'AMB_02_G03-06: Hemoterapia'
+[S13,R3]	3.269230769	#	
+[S13,R27]	0.68	#	
+[S13,R28]	1.02	#	
+[S13,R33]	0.51	#	
+[S13,R52]	0.55890411	#	
+[S13,R67]	0.55890411	#	
+[S14,R3]	3.269230769	#	'AMB_02_G03-09: Terapias especializadas'
+[S14,R29]	1.02	#	
+[S14,R33]	0.51	#	
+[S14,R36]	2.04	#	
+[S14,R67]	0.55890411	#	
+[S15,R3]	3.269230769	#	'AMB_02_G04-01: Pequenas cirurgias e cirurgias de pele  tecido subcutaneo e mucosa'
+[S15,R8]	5.1	#	
+[S15,R15]	19.61538462	#	
+[S15,R33]	0.51	#	
+[S15,R37]	20.4	#	
+[S15,R67]	0.55890411	#	
+[S16,R3]	3.269230769	#	'AMB_02_G04-04: Cirurgia das vias aereas superiores  face  cabeca e pescoco'
+[S16,R7]	10.2	#	
+[S16,R8]	5.1	#	
+[S16,R12]	19.61538462	#	
+[S16,R15]	19.61538462	#	
+[S16,R26]	2.04	#	
+[S16,R27]	0.68	#	
+[S16,R33]	0.51	#	
+[S16,R37]	20.4	#	
+[S16,R39]	0.55890411	#	
+[S16,R40]	0.55890411	#	
+[S16,R55]	0.55890411	#	
+[S16,R67]	0.55890411	#	
+[S17,R3]	3.269230769	#	'AMB_02_G04-06: Cirurgia do aparelho circulatorio'
+[S17,R6]	2.04	#	
+[S17,R8]	5.1	#	
+[S17,R12]	19.61538462	#	
+[S17,R15]	19.61538462	#	
+[S17,R27]	0.68	#	
+[S17,R33]	0.51	#	
+[S17,R37]	20.4	#	
+[S17,R38]	0.55890411	#	
+[S17,R39]	0.55890411	#	
+[S17,R40]	0.55890411	#	
+[S17,R67]	0.55890411	#	
+[S18,R3]	3.269230769	#	'AMB_02_G04-07: Cirurgia do aparelho digestivo  orgaos anexos e parede abdominal'
+[S18,R8]	5.1	#	
+[S18,R12]	19.61538462	#	
+[S18,R15]	19.61538462	#	
+[S18,R27]	0.68	#	
+[S18,R33]	0.51	#	
+[S18,R37]	20.4	#	
+[S18,R40]	0.55890411	#	
+[S18,R67]	0.55890411	#	
+[S19,R3]	3.269230769	#	'AMB_02_G04-08: Cirurgia do sistema osteomuscular'
+[S19,R8]	5.1	#	
+[S19,R12]	19.61538462	#	
+[S19,R15]	19.61538462	#	
+[S19,R27]	0.68	#	
+[S19,R33]	0.51	#	
+[S19,R37]	20.4	#	
+[S19,R40]	0.55890411	#	
+[S19,R67]	0.55890411	#	
+[S20,R3]	3.269230769	#	'AMB_02_G04-09: Cirurgia do aparelho geniturinario'
+[S20,R8]	5.1	#	
+[S20,R13]	19.61538462	#	
+[S20,R15]	19.61538462	#	
+[S20,R27]	0.68	#	
+[S20,R33]	0.51	#	
+[S20,R37]	20.4	#	
+[S20,R40]	0.55890411	#	
+[S20,R51]	0.55890411	#	
+[S20,R67]	0.55890411	#	
+[S21,R3]	3.269230769	#	'AMB_02_G04-12: Cirurgia toracica'
+[S21,R8]	5.1	#	
+[S21,R12]	19.61538462	#	
+[S21,R15]	19.61538462	#	
+[S21,R27]	0.68	#	
+[S21,R33]	0.51	#	
+[S21,R37]	20.4	#	
+[S21,R38]	0.55890411	#	
+[S21,R39]	0.55890411	#	
+[S21,R40]	0.55890411	#	
+[S21,R42]	0.55890411	#	
+[S21,R59]	0.55890411	#	
+[S21,R67]	0.55890411	#	
+[S22,R3]	3.269230769	#	'AMB_02_G04-15: Outras cirurgias'
+[S22,R8]	5.1	#	
+[S22,R12]	19.61538462	#	
+[S22,R15]	19.61538462	#	
+[S22,R27]	0.68	#	
+[S22,R33]	0.51	#	
+[S22,R34]	5.1	#	
+[S22,R35]	10.2	#	
+[S22,R37]	20.4	#	
+[S22,R39]	0.55890411	#	
+[S22,R40]	0.55890411	#	
+[S22,R41]	0.55890411	#	
+[S22,R43]	0.55890411	#	
+[S22,R67]	0.55890411	#	
+[S23,R3]	3.269230769	#	'AMB_02_G04-17: Anesteseologia'
+[S23,R33]	0.51	#	
+[S23,R37]	20.4	#	
+[S23,R67]	0.55890411	#	
+[S24,R2]	0.279452055	#	'AMB_03_G02-06: Diagnostico por tomografia'
+[S24,R5]	0.256120527	#	
+[S24,R9]	0.256120527	#	
+[S24,R33]	0.51	#	
+[S24,R67]	0.55890411	#	
+[S24,R49]	0.55890411	#	
+[S25,R2]	0.279452055	#	'AMB_03_G02-07: Diagnostico por ressonancia magnetica'
+[S25,R5]	0.256120527	#	
+[S25,R10]	0.256120527	#	
+[S25,R33]	0.51	#	
+[S25,R67]	0.55890411	#	
+[S25,R49]	0.55890411	#	
+[S26,R2]	0.279452055	#	
+[S26,R28]	1.02	#	'AMB_03_G03-06: Hemoterapia'
+[S26,R27]	0.68	#	
+[S26,R33]	0.51	#	
+[S26,R52]	0.55890411	#	
+[S26,R67]	0.55890411	#	
+[S27,R3]	3.269230769	#	'HOSP_02_G02-01: Coleta de material'
+[S27,R67]	0.55890411	#	
+[S27,R33]	0.51	#	
+[S27,R28]	1.02	#	
+[S28,R3]	3.269230769	#	'HOSP_02_G02-09: Diagnostico por endoscopia'
+[S28,R33]	0.51	#	
+[S28,R46]	0.55890411	#	
+[S28,R67]	0.55890411	#	
+[S29,R3]	3.269230769	#	'HOSP_02_G03-01: Consultas / Atendimentos / Acompanhamentos'
+[S29,R24]	2.04	#	
+[S29,R27]	0.68	#	
+[S29,R33]	0.51	#	
+[S29,R36]	2.04	#	
+[S29,R38]	0.55890411	#	
+[S29,R47]	0.55890411	#	
+[S29,R51]	0.55890411	#	
+[S29,R59]	0.55890411	#	
+[S29,R62]	0.55890411	#	
+[S29,R67]	0.55890411	#	
+[S29,R44]	0.55890411	#	
+[S29,R48]	0.55890411	#	
+[S29,R64]	0.55890411	#	
+[S30,R3]	3.269230769	#	'HOSP_02_G03-03: Tratamento clinico (outras especialidades)'
+[S30,R30]	2.04	#	
+[S30,R31]	2.04	#	
+[S30,R32]	2.04	#	
+[S30,R29]	1.02	#	
+[S30,R33]	0.51	#	
+[S30,R62]	0.55890411	#	
+[S30,R56]	0.55890411	#	
+[S30,R47]	0.55890411	#	
+[S30,R67]	0.55890411	#	
+[S31,R3]	3.269230769	#	'HOSP_02_G03-04: Tratamento em oncologia'
+[S31,R33]	0.51	#	
+[S31,R67]	0.55890411	#	
+[S31,R43]	0.55890411	#	
+[S32,R3]	3.269230769	#	'HOSP_02_G03-05: Tratamento em nefrologia'
+[S32,R27]	0.68	#	
+[S32,R33]	0.51	#	
+[S32,R54]	0.55890411	#	
+[S32,R67]	0.55890411	#	
+[S33,R1]	0.557377049	#	'HOSP_02_G03-08: Tratamento em lesoes  envenenamento e outros (causa externa)'
+[S33,R8]	5.1	#	
+[S33,R27]	0.68	#	
+[S33,R33]	0.51	#	
+[S33,R43]	0.55890411	#	
+[S33,R40]	0.55890411	#	
+[S33,R3]	3.269230769	#	
+[S33,R67]	0.55890411	#	
+[S34,R3]	3.269230769	#	'HOSP_02_G03-10: Parto e nascimento'
+[S34,R8]	5.1	#	
+[S34,R17]	15.69230769	#	
+[S34,R20]	19.61538462	#	
+[S34,R21]	19.61538462	#	
+[S34,R15]	15.69230769	#	
+[S34,R16]	19.61538462	#	
+[S34,R22]	19.61538462	#	
+[S34,R23]	19.61538462	#	
+[S34,R27]	0.68	#	
+[S34,R33]	0.51	#	
+[S34,R37]	20.4	#	
+[S34,R51]	0.55890411	#	
+[S34,R67]	0.55890411	#	
+[S35,R3]	3.269230769	#	'HOSP_02_G04-01: Pequenas cirurgias e cirurgias de pele  tecido subcutaneo e mucosa'
+[S35,R8]	5.1	#	
+[S35,R12]	19.61538462	#	
+[S35,R15]	19.61538462	#	
+[S35,R27]	0.68	#	
+[S35,R33]	0.51	#	
+[S35,R37]	20.4	#	
+[S35,R40]	0.55890411	#	
+[S35,R67]	0.55890411	#	
+[S36,R3]	3.269230769	#	'HOSP_02_G04-03: Cirurgia do sistema nervoso central e periferico'
+[S36,R1]	0.557377049	#	
+[S36,R8]	5.1	#	
+[S36,R12]	19.61538462	#	
+[S36,R15]	19.61538462	#	
+[S36,R22]	19.61538462	#	
+[S36,R27]	0.68	#	
+[S36,R33]	0.51	#	
+[S36,R37]	20.4	#	
+[S36,R39]	0.55890411	#	
+[S36,R40]	0.55890411	#	
+[S36,R67]	0.55890411	#	
+[S37,R3]	3.269230769	#	'HOSP_02_G04-04: Cirurgia das vias aereas superiores  face  cabeca e pescoco'
+[S37,R1]	0.557377049	#	
+[S37,R8]	5.1	#	
+[S37,R12]	19.61538462	#	
+[S37,R15]	19.61538462	#	
+[S37,R22]	19.61538462	#	
+[S37,R14]	19.61538462	#	
+[S37,R26]	2.04	#	
+[S37,R27]	0.68	#	
+[S37,R33]	0.51	#	
+[S37,R37]	20.4	#	
+[S37,R40]	0.55890411	#	
+[S37,R67]	0.55890411	#	
+[S38,R3]	3.269230769	#	HOSP_02_G04-06: Cirurgia do aparelho circulatorio'
+[S38,R1]	0.557377049	#	
+[S38,R8]	5.1	#	
+[S38,R12]	19.61538462	#	
+[S38,R15]	19.61538462	#	
+[S38,R27]	0.68	#	
+[S38,R33]	0.51	#	
+[S38,R37]	20.4	#	
+[S38,R38]	0.55890411	#	
+[S38,R39]	0.55890411	#	
+[S38,R40]	0.55890411	#	
+[S38,R67]	0.55890411	#	
+[S39,R3]	3.269230769	#	HOSP_02_G04-07: Cirurgia do aparelho digestivo  orgaos anexos e parede abdominal'
+[S39,R1]	0.557377049	#	
+[S39,R8]	5.1	#	
+[S39,R12]	19.61538462	#	
+[S39,R15]	19.61538462	#	
+[S39,R27]	0.68	#	
+[S39,R33]	0.51	#	
+[S39,R37]	20.4	#	
+[S39,R40]	0.55890411	#	
+[S39,R67]	0.55890411	#	
+[S40,R3]	3.269230769	#	'HOSP_02_G04-08: Cirurgia do sistema osteomuscular'
+[S40,R1]	0.557377049	#	
+[S40,R8]	5.1	#	
+[S40,R14]	19.61538462	#	
+[S40,R27]	0.68	#	
+[S40,R33]	0.51	#	
+[S40,R37]	20.4	#	
+[S40,R40]	0.55890411	#	
+[S40,R67]	0.55890411	#	
+[S41,R3]	3.269230769	#	'HOSP_02_G04-09: Cirurgia do aparelho geniturinario'
+[S41,R8]	5.1	#	
+[S41,R13]	19.61538462	#	
+[S41,R15]	19.61538462	#	
+[S41,R27]	0.68	#	
+[S41,R33]	0.51	#	
+[S41,R37]	20.4	#	
+[S41,R40]	0.55890411	#	
+[S41,R51]	0.55890411	#	
+[S41,R67]	0.55890411	#	
+[S42,R3]	3.269230769	#	'HOSP_02_G04-10: Cirurgia de mama'
+[S42,R8]	5.1	#	
+[S42,R12]	19.61538462	#	
+[S42,R15]	19.61538462	#	
+[S42,R27]	0.68	#	
+[S42,R33]	0.51	#	
+[S42,R37]	20.4	#	
+[S42,R40]	0.55890411	#	
+[S42,R41]	0.55890411	#	
+[S42,R67]	0.55890411	#	
+[S43,R3]	3.269230769	#	'HOSP_02_G04-11: Cirurgia obstetrica'
+[S43,R1]	0.557377049	#	
+[S43,R8]	5.1	#	
+[S43,R17]	19.61538462	#	
+[S43,R18]	19.61538462	#	
+[S43,R27]	0.68	#	
+[S43,R33]	0.51	#	
+[S43,R37]	20.4	#	
+[S43,R51]	0.55890411	#	
+[S43,R67]	0.55890411	#	
+[S44,R3]	3.269230769	#	'HOSP_02_G04-12: Cirurgia toracica'
+[S44,R1]	0.557377049	#	
+[S44,R8]	5.1	#	
+[S44,R14]	19.61538462	#	
+[S44,R15]	19.61538462	#	
+[S44,R27]	0.68	#	
+[S44,R33]	0.51	#	
+[S44,R37]	20.4	#	
+[S44,R38]	0.55890411	#	
+[S44,R39]	0.55890411	#	
+[S44,R40]	0.55890411	#	
+[S44,R42]	0.55890411	#	
+[S44,R59]	0.55890411	#	
+[S44,R67]	0.55890411	#	
+[S45,R3]	3.269230769	#	'HOSP_02_G04-13: Cirurgia reparadora'
+[S45,R7]	1.02	#	
+[S45,R8]	5.1	#	
+[S45,R14]	19.61538462	#	
+[S45,R15]	19.61538462	#	
+[S45,R27]	0.68	#	
+[S45,R33]	0.51	#	
+[S45,R37]	20.4	#	
+[S45,R40]	0.55890411	#	
+[S45,R41]	0.55890411	#	
+[S45,R67]	0.55890411	#	
+[S46,R3]	3.269230769	#	HOSP_02_G04-15: Outras cirurgias'
+[S46,R7]	10.2	#	
+[S46,R8]	5.1	#	
+[S46,R12]	19.61538462	#	
+[S46,R15]	19.61538462	#	
+[S46,R27]	0.68	#	
+[S46,R33]	0.51	#	
+[S46,R34]	5.1	#	
+[S46,R35]	10.2	#	
+[S46,R37]	20.4	#	
+[S46,R39]	0.55890411	#	
+[S46,R40]	0.55890411	#	
+[S46,R41]	0.55890411	#	
+[S46,R43]	0.55890411	#	
+[S46,R67]	0.55890411	#	
+[S47,R3]	3.269230769	#	'HOSP_03_G02-01: Coleta de material'
+[S47,R33]	1.02	#	
+[S47,R28]	1.02	#	
+[S47,R67]	0.55890411	#	
+[S48,R3]	3.269230769	#	'HOSP_03_G02-09: Diagnostico por endoscopia'
+[S48,R5]	0.256120527	#	
+[S48,R10]	0.256120527	#	
+[S48,R33]	0.51	#	
+[S48,R46]	0.55890411	#	
+[S48,R67]	0.55890411	#	
+[S49,R3]	3.269230769	#	'HOSP_03_G03-03: Tratamento clinico (outras especialidades)'
+[S49,R28]	1.02	#	
+[S49,R29]	1.02	#	
+[S49,R30]	2.04	#	
+[S49,R31]	2.04	#	
+[S49,R32]	2.04	#	
+[S49,R33]	0.51	#	
+[S49,R34]	5.1	#	
+[S49,R35]	10.2	#	
+[S49,R67]	0.55890411	#	
+[S49,R47]	0.55890411	#	
+[S49,R63]	0.55890411	#	
+[S49,R62]	0.55890411	#	
+[S49,R58]	0.55890411	#	
+[S49,R57]	0.55890411	#	
+[S49,R56]	0.55890411	#	
+[S49,R53]	0.55890411	#	
+[S49,R50]	0.55890411	#	
+[S50,R3]	3.269230769	#	'HOSP_03_G04-04: Cirurgia das vias aereas superiores   face  cabeca e pescoco'
+[S50,R1]	0.557377049	#	
+[S50,R7]	10.2	#	
+[S50,R8]	5.1	#	
+[S50,R27]	0.68	#	
+[S50,R33]	0.51	#	
+[S50,R37]	20.4	#	
+[S50,R39]	0.55890411	#	
+[S50,R40]	0.55890411	#	
+[S50,R67]	0.55890411	#	
+[S51,R3]	3.269230769	#	HOSP_03_G04-06: Cirurgia do aparelho circulatorio | FAEC + 1'
+[S51,R1]	0.557377049	#	
+[S51,R8]	5.1	#	
+[S51,R12]	19.61538462	#	
+[S51,R15]	19.61538462	#	
+[S51,R22]	19.61538462	#	
+[S51,R14]	19.61538462	#	
+[S51,R27]	0.68	#	
+[S51,R33]	0.51	#	
+[S51,R37]	20.4	#	
+[S51,R38]	0.55890411	#	
+[S51,R39]	0.55890411	#	
+[S51,R40]	0.55890411	#	
+[S51,R45]	0.55890411	#	
+[S51,R67]	0.55890411	#	
+[S52,R3]	3.269230769	#	HOSP_03_G04-07: Cirurgia do aparelho digestivo  orgaos anexos e parede abdominal | FAEC + 80'
+[S52,R1]	0.557377049	#	
+[S52,R8]	5.1	#	
+[S52,R12]	19.61538462	#	
+[S52,R15]	19.61538462	#	
+[S52,R22]	19.61538462	#	
+[S52,R27]	0.68	#	
+[S52,R33]	0.51	#	
+[S52,R37]	20.4	#	
+[S52,R39]	0.55890411	#	
+[S52,R40]	0.55890411	#	
+[S52,R67]	0.55890411	#	
+[S53,R3]	3.269230769	#	'HOSP_03_G04-08: Cirurgia do sistema osteomuscular'
+[S53,R1]	0.557377049	#	
+[S53,R8]	5.1	#	
+[S53,R14]	19.61538462	#	
+[S53,R15]	19.61538462	#	
+[S53,R27]	0.68	#	
+[S53,R33]	0.51	#	
+[S53,R37]	20.4	#	
+[S53,R40]	0.55890411	#	
+[S53,R55]	0.55890411	#	
+[S53,R45]	0.55890411	#	
+[S53,R67]	0.55890411	#	
+[S54,R3]	3.269230769	#	'HOSP_03_G04-12: Cirurgia toracica'
+[S54,R1]	0.557377049	#	
+[S54,R8]	5.1	#	
+[S54,R14]	19.61538462	#	
+[S54,R15]	19.61538462	#	
+[S54,R22]	19.61538462	#	
+[S54,R27]	0.68	#	
+[S54,R33]	0.51	#	
+[S54,R37]	20.4	#	
+[S54,R38]	0.55890411	#	
+[S54,R39]	0.55890411	#	
+[S54,R40]	0.55890411	#	
+[S54,R42]	0.55890411	#	
+[S54,R59]	0.55890411	#	
+[S54,R67]	0.55890411	#	
+[S55,R3]	3.269230769	#	HOSP_03_G04-15: Outras cirurgias | FAEC + 5'
+[S55,R1]	0.557377049	#	
+[S55,R8]	5.1	#	
+[S55,R19]	19.61538462	#	
+[S55,R27]	0.68	#	
+[S55,R33]	0.51	#	
+[S55,R34]	5.1	#	
+[S55,R35]	10.2	#	
+[S55,R37]	20.4	#	
+[S55,R38]	0.55890411	#	
+[S55,R39]	0.55890411	#	
+[S55,R40]	0.55890411	#	
+[S55,R41]	0.55890411	#	
+[S55,R67]	0.55890411	#	
+[S55,R59]	0.55890411	#	
+[S56,R3]	3.269230769	#	HOSP_03_G05-03: Ações relacionadas a doação de órgãos e tecidos para transplante | FAEC + 27'
+[S56,R25]	0.68	#	
+[S56,R33]	0.51	#	
+[S56,R34]	5.1	#	
+[S56,R35]	10.2	#	
+[S56,R36]	2.04	#	
+[S56,R67]	0.55890411	#	
+;
+
+end;
+
